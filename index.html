@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="bodiv">
+        <fieldset style="width: fit-content;">
+            <legend>Simulation</legend>
+            <canvas width="1300" height="300" id="canvas_simu"></canvas>
+        </fieldset>
+        <fieldset style="width: 30%;">
+            <legend>Général</legend>
+            <table style="width: 100%;">
+                <tr><th>Paramètre</th><th>Contrôleur</th><th>Valeur</th></tr>
+                <tr><td>Physique:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_physics">Activer physique</span></td><td><span id="physics_toggle_state">Non</span></td></tr>
+                <tr><td>Physique:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="radio" name="auto_physics" data-auto_physics="Auto" id="auto_physic_radio_elem">Auto</span><span><input type="radio" name="auto_physics" data-auto_physics="Manu" checked id="manual_physic_radio_elem">Manu</span></td><td><span id="physics_control_state">Manu</span></td></tr>
+                <tr><td>Pente:</td><td><input type="range" id="train_slope_input" min="-10" max="10" disabled></td><td><span id="train_slope_state">0</span>%</td></tr>
+                <tr><td>Puissance:</td><td><input class="input_phy" type="range" id="train_power_input" min="0" max="520" value="520"></td><td><span id="train_power_state">0</span>kW</td></tr>
+                <tr><td>Frein mécanique:</td><td><input class="input_phy" type="range" id="train_brake_input" min="0" max="100" value="0"></td><td><span id="train_brake_state">0</span>%</td></tr>
+                <tr><td>Masse:</td><td><input class="input_phy" type="range" id="train_mass_input" min="28" max="42" value="28"></td><td><span id="train_mass_state">0</span>T</td></tr>
+                <tr><td>Frottements:</td><td><input class="input_phy" type="range" id="train_frott_input" min="0" max="1" value="0" step="0.1"></td><td><span id="train_frott_state">0</span></td></tr>
+                <tr><td>Patinage:</td><td><input type="range" id="train_pat_input" min="0" max="1" value="0" step="0.1" disabled></td><td><span id="train_pat_state">0</span></td></tr>
+                <tr><td>Conduite:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="radio" name="auto_control" data-auto_control="Auto" id="auto_control_radio_elem">Auto</span><span><input type="radio" name="auto_control" data-auto_control="Manu" checked id="manual_control_radio_elem">Manu</span></td><td><span id="train_autocontrol_state">Manu</span></td></tr>
+                <tr><td>Cran:</td><td><input type="range" id="train_throttle_input" min="-5" max="5" value="0"></td><td><span id="train_throttle_state">0</span></td></tr>
+                <tr><td>Vitesse:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_vaff">Vitesse affine</span></td><td><span id="vaff_enable_state">Non</span></td></tr>
+                <tr><td>Départ:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_depart" checked>Contrôle départ</span></td><td><span id="train_departure_toggle_state">Oui</span></td></tr>
+                <tr><td>Drapeau:</td><td style="text-align: center; display: flex; justify-content: space-around;"><button style="width: 100%;" id="btn_train_departure">Départ</button></td><td></td></tr>
+                <tr><td>Son:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_sound">Activer son</span></td><td><span id="train_sound_state">Non</span></td></tr>
+            </table>
+            <div id="btn_container_general">
+                <button id="btn_quick_setup">Setup rapide</button>
+                <button>Reset</button>
+                <button disabled id="btn_quick_sysstop">Arrêt contrôle</button>
+            </div>
+            <div id="btn_container_general">
+                <button style="background-color: red; color: white;" id="btn_embrake">Arrêt urgence</button>
+                <button disabled id="btn_embrake_reset">Remise à 0</button>
+            </div>
+            <div id="btn_container_general">
+                <button style="background-color: darkred; color: white; font-weight: bold;">Stop général</button>
+            </div>
+        </fieldset>
+    </div>
+    <div id="bodiv2">
+        <fieldset style="width: 50%; display: flex; flex-direction: row; align-items:center; justify-content: center; height: 100%;">
+            <legend>Données</legend>
+            <table style="height: 100%; width: 33%;">
+                <tr><th>Donnée</th><th>Valeur</th><th>Unit.</th></tr>
+                <tr><td>Vitesse</td><td id="actualTrainSpeed">x</td><td>km/h</td></tr>
+                <tr><td>Vitesse</td><td id="actualTrainSpeedMS">x</td><td>m/s</td></tr>
+                <tr><td>Vitesse calculée</td><td id="actualTrainSpeedVKMH">x</td><td>vkm/h</td></tr>
+                <tr><td>Delta V</td><td id="deltaSpeed">x</td><td>km/h</td></tr>
+                <tr><td>Acceleration</td><td id="speedAccelOut">x</td><td>m/s²</td></tr>
+                <tr><td>Force</td><td id="speedAccelOutG">x</td><td>G</td></tr>
+                <tr><td>PM</td><td id="currentPMout"></td><td>m</td></tr>
+                <caption>Valeurs générales</caption>
+            </table>
+            <table style="height: 100%; width: 33%; ">
+                <tr><th>Label</th><th>Valeur</th></tr>
+                <tr><td>Consigne</td><td>0km/h</td></tr>
+                <tr><td>Type</td><td>Acceleration</td></tr>
+                <tr><td>Distance</td><td>200m</td></tr>
+                <tr><td>Distance restante</td><td>76m</td></tr>
+                <tr><td>Vitesse PM (théorique)</td><td>30km/h</td></tr>
+                <tr><td>Ecart vitesse</td><td>0.3km/h</td></tr>
+                <tr><td>Acceleration calculée</td><td>1.3</td></tr>
+                <tr><td>Equivalent cran</td><td>4</td></tr>
+                <tr><td>Alerte dépassement</td><td>Non</td></tr>
+                <caption>Calculs PAE</caption>
+            </table>
+            <table style="height: 100%; width: 33%;">
+                <tr><th>Label</th><th>Valeur</th></tr>
+                <tr><td>Mode</td><td>Entassement</td></tr>
+                <tr><td>PM début</td><td>x</td></tr>
+                <tr><td>PM fin</td><td>x</td></tr>
+                <tr><td>PM PAP</td><td>200m</td></tr>
+                <tr><td>PM PAF</td><td>76m</td></tr>
+                <tr><td>Vmax zone</td><td>10km/h</td></tr>
+                <caption>Détails consigne</caption>
+            </table>
+        </fieldset>
+        <fieldset style="width: 50%;">
+            <legend>Commandes</legend>
+            <div>
+                <table style="width: 100%;">
+                    <tr>
+                        <th>Label</th>
+                        <th>Vitesse</th>
+                        <th>Commande</th>
+                        <th>Divers</th>
+                    </tr>
+                    <tr>
+                        <td>Acceleration</td>
+                        <td><span><input type="range" min="1" max="80" value="1" style="width: 90%;" id="accel_cmd_vit_input"><span id="accel_cmd_vit_input_state">0</span></span></td>
+                        <td><span><button style="width: 100%;">Envoi</button></td>
+                    </tr>
+                    <tr>
+                        <td>Ralentissement</td>
+                        <td><span><input type="range" min="1" max="80" value="1" style="width: 90%;" id="decel_cmd_vit_input"><span id="decel_cmd_vit_input_state">0</span></span></td>
+                        <td><span><button style="width: 100%;">Envoi</button></td>
+                        <td style="text-align: center;"><span>Ajust?<input type="checkbox" id=""></span></td>
+                    </tr>
+                    <tr>
+                        <td>Arrêt</td>
+                        <td style="text-align: center;">0</td>
+                        <td><span><button style="width: 100%;">Envoi</button></td>
+                        <td style="text-align: center;"><span>Ajust?<input type="checkbox" id=""></span></td>
+                    </tr>
+                    <caption>Presets max</caption>
+                </table>
+                <table style="width: 100%;">
+                    <tr>
+                        <th>Paramètre</th>
+                        <th>Contrôleur</th>
+                        <th>Valeur</th>
+                    </tr>
+                    <tr>
+                        <td>Consigne</td>
+                        <td><input type="range" min="1" max="80" value="1" style="width: 100%;" id="consigne_vit_input"></td>
+                        <td id="consigne_vit_input_state">x km/h</td>
+                    </tr>
+                    <tr>
+                        <td>PMD</td>
+                        <td><input type="text" disabled value="AUTOMATIQUE" style="width: 97%;"></td>
+                        <td id="consigne_pmd_input_state">PM 0</td>
+                    </tr>
+                    <tr>
+                        <td>Courbe</td>
+                        <td><span><input type="checkbox" id="consigne_courbe_prog_input"> Progressif</span></td>
+                        <td id="consigne_courbe_prog_input_state">Oui</td>
+                    </tr>
+                    <tr>
+                        <td>Limite</td>
+                        <td><span><input type="radio" name="radio_lim_type_cons" data-cons_lim="Dist" checked> Distance</span><span><input type="radio" name="radio_lim_type_cons" data-cons_lim="Accel"> Accélération</span></td>
+                        <td id="radio_lim_type_cons_state">Dist</td>
+                    </tr>
+                    <tr>
+                        <td>Aide distance</td>
+                        <td><span><input type="checkbox" id="consigne_aide_distance_input" checked> Slider</span></td>
+                        <td id="consigne_aide_distance_input_state">Actif</td>
+                    </tr>
+                    <tr>
+                        <td>Distance</td>
+                        <td><input type="range" min="1" max="500" value="1" style="width: 100%;" id="consigne_dist_input"></td>
+                        <td id="consigne_dist_input_state">x m</td>
+                    </tr>
+                    <tr>
+                        <td>PAF/Lim</td>
+                        <td><input type="text" value="334" style="width: 97%;" id="consigne_paflim_input"></td>
+                        <td id="consigne_paflim_input_state">PM 337</td>
+                    </tr>
+                    <tr>
+                        <td>Acceleration</td>
+                        <td><input type="range" min="0.1" max="1.3" value="0.1" style="width: 100%;" step="0.1" id="consigne_accel_input"></td>
+                        <td id="consigne_accel_input_state">0.1 m/s²</td>
+                    </tr>
+                    <tr>
+                        <td>Envoi</td>
+                        <td><button style="width: 100%;">Envoi consigne</button></td>
+                    </tr>
+                    <caption>Consigne personalisée</caption>
+                </table>
+            </div>
+        </fieldset>
+    </div>
+    <div id="bodiv3">
+        <fieldset style="width: 50%;">
+            <legend>Pièges</legend>
+            <table style="width: 100%;">
+                <tr>
+                    <th>Vitesse</th>
+                    <th>PM</th>
+                    <th>Type</th>
+                    <th>Mode</th>
+                    <th>Raison</th>
+                    <th>VThéo</th>
+                    <th>Accel</th>
+                    <th>EquCran</th>
+                    <th>PAP</th>
+                    <th>PAF</th>
+                    <th>Vmax</th>
+                </tr>
+                <tr>
+                    <td></td>
+                </tr>
+            </table>
+        </fieldset>
+        <fieldset style="width: 50%;">
+            <legend>Historique</legend>
+        </fieldset>
+    </div>
+    <script src="./index.js"></script>
+    <script src="./sounds.js"></script>
+</body>
+</html>
