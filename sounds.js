@@ -381,4 +381,6 @@ window.updateSounds=()=>{
     SOUND_MANAGER.registerSound('defu206','./src/snd/val206/de-fu.mp3')
     SOUND_MANAGER.registerSound('fuprem206','./src/snd/val206/fu_prem.mp3')
     SOUND_MANAGER.registerSound('finfu206','./src/snd/val206/finFu.mp3')
+
+    SOUND_MANAGER.registerSound('pcc','./src/snd/sim/beep.wav')
 })();

@@ -42,6 +42,9 @@ td>input[type="range"]{
 .lpccGrn{
     background-color: #64E54F;
 }
+.lpccAcq{
+    color: white;
+}
 .btnBlinck {
     animation: blinker 0.8s step-end infinite;
     background-color: #F5E142;

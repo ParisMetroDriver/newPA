@@ -14,21 +14,21 @@
             <table>
                 <tr>
                     <th>Consigne</th>
-                    <td><input type="text" class="lpcc" value="Attente consigne" disabled></td>
-                    <td><input type="text" class="lpcc" value="Consigne rejetée" disabled></td>
-                    <td><input type="text" class="lpcc" value="Courbe de contrôle" disabled></td>
-                    <td><input type="text" class="lpcc" value="Consigne en attente" disabled></td>
-                    <td><input type="text" class="lpcc" value="Insufisance consigne" disabled></td>
-                    <td><input type="text" class="lpcc" value="APM Hors bornes" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_attente_cons" value="Attente consigne" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_cons_reject" value="Consigne rejetée" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_control_crb" value="Courbe de contrôle" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_waiting_con" value="Consigne en attente" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_insuf_cons" value="Insufisance consigne" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_apm_hb" value="APM Hors bornes" disabled></td>
                 </tr>
                 <tr>
                     <th>Mobilité</th>
-                    <td><input type="text" class="lpcc" value="Arrêt anti-retour" disabled></td>
-                    <td><input type="text" class="lpcc" value="Commande FU" disabled></td>
-                    <td><input type="text" class="lpcc" value="Etat FU" disabled></td>
-                    <td><input type="text" class="lpcc" value="Vitesse nulle" disabled></td>
-                    <td><input type="text" class="lpcc" value="Défaut frein moteur" disabled></td>
-                    <td><input type="text" class="lpcc" value="Acceleration insufisante" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_noret_stop" value="Arrêt anti-retour" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_cmd_fu" value="Commande FU" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_fustate" value="Etat FU" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_null_vit" value="Vitesse nulle" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_def_motorb" value="Défaut frein moteur" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_accel_insuf" value="Acceleration insufisante" disabled></td>
                 </tr>
                 <tr>
                     <th>Compteurs</th>
@@ -44,7 +44,7 @@
                 </tr>
             </table>
             <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
-                <button>Acq</button>
+                <button id="pcc_acq">Acq</button>
             </div>
         </fieldset>
         <fieldset style="width: 30%;">
