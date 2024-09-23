@@ -1,4 +1,4 @@
-#bodiv, #bodiv2, #bodiv3{
+#bodiv, #bodiv2, #bodiv3,#bodiv4{
     font-family: 'Courier New', Courier, monospace;
     font-size: 19;
     display: flex;
@@ -24,4 +24,35 @@ td>input[type="range"]{
 }
 #btn_container_general>button{
     width: 100%;
+}
+
+.lpcc{
+    text-align: center;
+    color: black;
+    height: 22px;
+}
+.lpccsmall{
+    text-align: center;
+    color: black;
+    height: 22px;
+}
+.lpccAlarm{
+    background-color: #C50000;
+}
+.lpccGrn{
+    background-color: #64E54F;
+}
+.btnBlinck {
+    animation: blinker 0.8s step-end infinite;
+    background-color: #F5E142;
+}
+.btnBlinck:disabled {
+    animation: none;
+    background-color: #f54242;
+}
+
+@keyframes blinker {
+    50% {
+        color: white;
+    }
 }

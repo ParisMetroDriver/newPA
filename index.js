@@ -18,6 +18,8 @@ let currentSpeed = 0;
 let currentDistance = 0;
 let currentPOS = 0;
 
+let GoAuth = false;
+
 let currentThrottle=parseInt(get('train_throttle_input').value)
 let currentSlope=parseInt(get('train_slope_input').value)
 let currentPower=parseInt(get('train_power_input').value)
@@ -31,6 +33,16 @@ init()
 function init(){
     update();
     requestAnimationFrame(init);
+}
+
+let TrainConsignes = []
+let ConsigneArchive = []
+
+class CONSIGNE {
+    constructor(pmd, paf, cons, prog, mode, accellim) {
+        TrainConsignes.push({pmd: pmd, vit: cons, lim: {type: mode, lim: accellim|paf}, func: prog?"linear":"const"})
+        console.log(TrainConsignes)
+    }
 }
 
 function update(){
@@ -47,6 +59,7 @@ function update(){
     SPEED_UPDATE()
     DISTANCE_UPDATE()
     FU_LISTENER()
+    CONSIGNE_APP()
     if(get('enable_sound').checked){
         window.updateSounds()
     } else {
@@ -81,6 +94,7 @@ function HTML_UPDATE(){
             get('physics_control_state').innerText=`${elem.getAttribute("data-auto_physics")}`
         }
     }
+
     get('train_slope_state').innerText=`${get('train_slope_input').value}`
     get('train_power_state').innerText=`${get('train_power_input').value}`
     get('train_brake_state').innerText=`${get('train_brake_input').value}`
@@ -134,9 +148,13 @@ function HTML_UPDATE(){
         }
     }
     if(get('enable_depart').checked){
-        get('btn_train_departure').disabled=false
+        //get('btn_train_departure').disabled=false
     } else {
         get('btn_train_departure').disabled=true
+    }
+
+    if(get("consigne_aide_distance_input").checked){
+        get('consigne_paflim_input').value=parseInt(get("consigne_dist_input").value)+parseFloat(currentPOS.toFixed(1))
     }
 
     get('accel_cmd_vit_input_state').innerText=`${get('accel_cmd_vit_input').value}`
@@ -171,6 +189,8 @@ function HTML_UPDATE(){
             }
         }
     }
+
+
 
     currentThrottle=parseInt(get('train_throttle_input').value)
     currentSlope=parseInt(get('train_slope_input').value)
@@ -280,6 +300,71 @@ function CANVAS_UPDATE(){
     if(Object.keys(LoadedImg).length<GlobalImg.length) return;
     BACKGROUND_FILL()
 }
+let DoneInterval=[]
+function CONSIGNE_APP(){
+    if(TrainConsignes.length===0) return;
+    let CurrCons=TrainConsignes[0]
+    if(get("enable_depart").checked){
+        if(currentSpeed===0 && GoAuth===false) return get("btn_train_departure").disabled=false
+    }
+
+    GoAuth=false
+    get("btn_train_departure").disabled=true
+    let ADVpm=(currentPOS-CurrCons.pmd)/(CurrCons.lim.lim-CurrCons.pmd)
+    //console.log(ADVpm)
+    let FreqCtrl = 0.05
+    let IntervalArray = []
+    for(let i=0;i<1;i+=FreqCtrl){
+        IntervalArray.push(parseFloat(i.toFixed(2)))
+    }
+    //console.log(IntervalArray)
+    //console.log(IntervalArray)
+    if(CurrCons.vit<currentSpeed){
+        let dV=currentSpeed-CurrCons.vit
+        let Vpm = (adv)=>(dV*(1-adv))+CurrCons.vit;
+        if(IntervalArray.includes(parseFloat(ADVpm.toFixed(2))) && ADVpm<1 && (DoneInterval.includes(parseFloat(ADVpm.toFixed(2)))===false)){
+            console.log(`CONTROLE ${parseFloat(ADVpm.toFixed(2))}`)
+            let dPCIx = (CurrCons.lim.lim-CurrCons.pmd)*FreqCtrl
+            let VPPCI=(Vpm(ADVpm+FreqCtrl)/3.6)
+            let CurrSpeedMS=(currentSpeed/3.6)
+            let calcAccel=((VPPCI**2)-(CurrSpeedMS**2))/(2*dPCIx)
+            console.log(calcAccel)
+            console.log(`VITESSE ACTUELLE: ${(currentSpeed/3.6).toFixed(2)}m/s.\nVITESSE AU PM ${(ADVpm+FreqCtrl).toFixed(2)}: ${(Vpm(ADVpm+FreqCtrl)/3.6).toFixed(2)}.\nDISTANCE: ${dPCIx.toFixed(2)}`)
+            //console.log((Vpm(ADVpm+FreqCtrl)/3.6))
+            let accelToCran=parseFloat(((calcAccel*5)/1.39).toFixed(2))
+            //console.log(accelToCran)
+            if(accelToCran<-5){
+                fuStart=true
+                get('train_throttle_input').value=0
+                currentThrottle=0
+                fuTriggered=true
+                console.log("fu")
+            } else {
+                get('train_throttle_input').value=accelToCran
+                currentThrottle=accelToCran
+            }
+
+
+            DoneInterval.push(parseFloat(ADVpm.toFixed(2)))
+        }
+
+    } else {
+        TrainConsignes.shift()
+        console.log("Consigne rejetée")
+        DoneInterval=[]
+    }
+    if(ADVpm>1){
+        TrainConsignes.shift()
+        console.log("Dépassement ADV")
+        DoneInterval=[]
+        fuStart=true
+        get('train_throttle_input').value=0
+        currentThrottle=0
+        fuTriggered=true
+        console.log("fu")
+    }
+
+}
 
 get('btn_quick_setup').addEventListener('click',()=>{
     get('enable_physics').checked=true
@@ -311,4 +396,15 @@ get('btn_embrake_reset').addEventListener('click',()=>{
     fuBtn=false
     get('btn_embrake').disabled=false
     get('btn_embrake_reset').disabled=true
+})
+
+get("consigne_send_manual").addEventListener("click",()=>{
+    let Cons = new CONSIGNE(currentPOS, parseFloat(get('consigne_paflim_input').value), parseInt(get('consigne_vit_input').value), get("consigne_courbe_prog_input").checked, get("radio_lim_type_cons_state").innerText, parseFloat(get("consigne_accel_input").value))
+})
+
+get('btn_train_departure').addEventListener('mousedown',()=>{
+    GoAuth=true
+})
+get('btn_train_departure').addEventListener('mouseup',()=>{
+    GoAuth=false
 })

@@ -8,9 +8,44 @@
 </head>
 <body>
     <div id="bodiv">
-        <fieldset style="width: fit-content;">
+        <fieldset style="width: fit-content; display: flex; flex-direction: column;">
             <legend>Simulation</legend>
             <canvas width="1300" height="300" id="canvas_simu"></canvas>
+            <table>
+                <tr>
+                    <th>Consigne</th>
+                    <td><input type="text" class="lpcc" value="Attente consigne" disabled></td>
+                    <td><input type="text" class="lpcc" value="Consigne rejetée" disabled></td>
+                    <td><input type="text" class="lpcc" value="Courbe de contrôle" disabled></td>
+                    <td><input type="text" class="lpcc" value="Consigne en attente" disabled></td>
+                    <td><input type="text" class="lpcc" value="Insufisance consigne" disabled></td>
+                    <td><input type="text" class="lpcc" value="APM Hors bornes" disabled></td>
+                </tr>
+                <tr>
+                    <th>Mobilité</th>
+                    <td><input type="text" class="lpcc" value="Arrêt anti-retour" disabled></td>
+                    <td><input type="text" class="lpcc" value="Commande FU" disabled></td>
+                    <td><input type="text" class="lpcc" value="Etat FU" disabled></td>
+                    <td><input type="text" class="lpcc" value="Vitesse nulle" disabled></td>
+                    <td><input type="text" class="lpcc" value="Défaut frein moteur" disabled></td>
+                    <td><input type="text" class="lpcc" value="Acceleration insufisante" disabled></td>
+                </tr>
+                <tr>
+                    <th>Compteurs</th>
+                    <td>Compteur FU<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled></td>
+                    <td>Consigne queue<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled></td>
+                    <td>Contrôles<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled></td>
+                </tr>
+                <tr>
+                    <th>Commandes</th>
+                    <td><button style="width: 90%;">Acq Cpt FU</button></td>
+                    <td><button style="width: 90%;">Interompre ordre</button></td>
+                    <td><button style="width: 90%;">Exporter consigne</button></td>
+                </tr>
+            </table>
+            <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                <button>Acq</button>
+            </div>
         </fieldset>
         <fieldset style="width: 30%;">
             <legend>Général</legend>
@@ -25,10 +60,10 @@
                 <tr><td>Frottements:</td><td><input class="input_phy" type="range" id="train_frott_input" min="0" max="1" value="0" step="0.1"></td><td><span id="train_frott_state">0</span></td></tr>
                 <tr><td>Patinage:</td><td><input type="range" id="train_pat_input" min="0" max="1" value="0" step="0.1" disabled></td><td><span id="train_pat_state">0</span></td></tr>
                 <tr><td>Conduite:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="radio" name="auto_control" data-auto_control="Auto" id="auto_control_radio_elem">Auto</span><span><input type="radio" name="auto_control" data-auto_control="Manu" checked id="manual_control_radio_elem">Manu</span></td><td><span id="train_autocontrol_state">Manu</span></td></tr>
-                <tr><td>Cran:</td><td><input type="range" id="train_throttle_input" min="-5" max="5" value="0"></td><td><span id="train_throttle_state">0</span></td></tr>
+                <tr><td>Cran:</td><td><input type="range" id="train_throttle_input" min="-5" max="5" value="0" step="0.1"></td><td><span id="train_throttle_state">0</span></td></tr>
                 <tr><td>Vitesse:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_vaff">Vitesse affine</span></td><td><span id="vaff_enable_state">Non</span></td></tr>
                 <tr><td>Départ:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_depart" checked>Contrôle départ</span></td><td><span id="train_departure_toggle_state">Oui</span></td></tr>
-                <tr><td>Drapeau:</td><td style="text-align: center; display: flex; justify-content: space-around;"><button style="width: 100%;" id="btn_train_departure">Départ</button></td><td></td></tr>
+                <tr><td>Drapeau:</td><td style="text-align: center; display: flex; justify-content: space-around;"><button style="width: 100%;" id="btn_train_departure" class="btnBlinck" disabled>Départ</button></td><td></td></tr>
                 <tr><td>Son:</td><td style="text-align: center; display: flex; justify-content: space-around;"><span><input type="checkbox" id="enable_sound">Activer son</span></td><td><span id="train_sound_state">Non</span></td></tr>
             </table>
             <div id="btn_container_general">
@@ -96,19 +131,19 @@
                     <tr>
                         <td>Acceleration</td>
                         <td><span><input type="range" min="1" max="80" value="1" style="width: 90%;" id="accel_cmd_vit_input"><span id="accel_cmd_vit_input_state">0</span></span></td>
-                        <td><span><button style="width: 100%;">Envoi</button></td>
+                        <td><span><button style="width: 100%;">Envoi</button></span></td>
                     </tr>
                     <tr>
                         <td>Ralentissement</td>
                         <td><span><input type="range" min="1" max="80" value="1" style="width: 90%;" id="decel_cmd_vit_input"><span id="decel_cmd_vit_input_state">0</span></span></td>
-                        <td><span><button style="width: 100%;">Envoi</button></td>
-                        <td style="text-align: center;"><span>Ajust?<input type="checkbox" id=""></span></td>
+                        <td><span><button style="width: 100%;">Envoi</button></span></td>
+                        <td style="text-align: center;"><span>Ajust?<input type="checkbox"></span></td>
                     </tr>
                     <tr>
                         <td>Arrêt</td>
                         <td style="text-align: center;">0</td>
-                        <td><span><button style="width: 100%;">Envoi</button></td>
-                        <td style="text-align: center;"><span>Ajust?<input type="checkbox" id=""></span></td>
+                        <td><span><button style="width: 100%;">Envoi</button></span></td>
+                        <td style="text-align: center;"><span>Ajust?<input type="checkbox"></span></td>
                     </tr>
                     <caption>Presets max</caption>
                 </table>
@@ -135,7 +170,7 @@
                     </tr>
                     <tr>
                         <td>Limite</td>
-                        <td><span><input type="radio" name="radio_lim_type_cons" data-cons_lim="Dist" checked> Distance</span><span><input type="radio" name="radio_lim_type_cons" data-cons_lim="Accel"> Accélération</span></td>
+                        <td><span><input type="radio" name="radio_lim_type_cons" data-cons_lim="Dist" checked> Distance</span><span><input type="radio" name="radio_lim_type_cons" data-cons_lim="Accel" disabled> Accélération</span></td>
                         <td id="radio_lim_type_cons_state">Dist</td>
                     </tr>
                     <tr>
@@ -160,7 +195,7 @@
                     </tr>
                     <tr>
                         <td>Envoi</td>
-                        <td><button style="width: 100%;">Envoi consigne</button></td>
+                        <td><button style="width: 100%;" id="consigne_send_manual">Envoi consigne</button></td>
                     </tr>
                     <caption>Consigne personalisée</caption>
                 </table>
@@ -168,6 +203,14 @@
         </fieldset>
     </div>
     <div id="bodiv3">
+        <fieldset style="width: 100%;">
+            <legend>Simuation full-auto</legend>
+            <span style="font-weight: bold;">Ce mode permet de tester le mode entassement d'un train.</span><br>
+            <span style="font-weight: bold;">Les consignes sont générées automatiquement.</span><br>
+            <span><input type="checkbox" id=""> Avec train secondaire</span>
+        </fieldset>
+    </div>
+    <div id="bodiv4">
         <fieldset style="width: 50%;">
             <legend>Pièges</legend>
             <table style="width: 100%;">
@@ -179,6 +222,7 @@
                     <th>Raison</th>
                     <th>VThéo</th>
                     <th>Accel</th>
+                    <th>Pt Mes</th>
                     <th>EquCran</th>
                     <th>PAP</th>
                     <th>PAF</th>
