@@ -247,7 +247,7 @@ function HTML_UPDATE(){
 
 
 
-    currentThrottle=parseInt(get('train_throttle_input').value)
+    currentThrottle=parseFloat(get('train_throttle_input').value)
     currentSlope=parseInt(get('train_slope_input').value)
     currentPower=parseInt(get('train_power_input').value)
     currentMasse=parseInt(get('train_mass_input').value)
@@ -347,6 +347,7 @@ function BACKGROUND_FILL(){
     }
     ctx.drawImage(LoadedImg.trainimg, 0, 50, (LoadedImg.trainimg.width/LoadedImg.trainimg.div), (LoadedImg.trainimg.height/LoadedImg.trainimg.div));
 }
+let lastSpeed2 = 0
 
 function SHOW_DETAILS(){
     if(TrainConsignes.length===0) return;
@@ -361,7 +362,20 @@ function SHOW_DETAILS(){
     ctx.strokeStyle = "blue";
     ctx.stroke();
     ctx.fillStyle="red"
-    ctx.fillRect(100,200-(currentSpeed*2)-5, 50, 10)
+    ctx.beginPath();
+    ctx.moveTo(180, 200-((currentSpeed)*2)-10);
+    ctx.lineTo(200, 200-(currentSpeed)*2);
+    ctx.lineTo(180, 200-((currentSpeed)*2)+10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "green";
+    ctx.beginPath();
+    ctx.moveTo(200, 200-((currentSpeed)*2));
+    ctx.lineTo(((CurrCons.lim.lim-currentPOS)*50)+200, 200-(CurrCons.vit*2));
+    ctx.closePath();
+    ctx.stroke();
+    //ctx.fillRect(200,200-((currentSpeed)*2), 50, 10)
 }
 
 function CANVAS_UPDATE(){
@@ -375,9 +389,9 @@ function CANVAS_UPDATE(){
     }
 }
 let PaInterval=false
-let lastAccel=false
+let lastAccel=0
 let FreqCtrl = 100
-let lastSpeed2 = 0
+
 
 let PaIntervalGlobal=setInterval(()=>{
     if(TrainConsignes.length===0) return;
@@ -398,49 +412,36 @@ let PaIntervalGlobal=setInterval(()=>{
     let dV=currentSpeed-CurrCons.vit
     let Vpm = (adv)=>(dV*(1-adv))+CurrCons.vit;
     let CurrConsVitMS=CurrCons.vit/3.6
+    let CurrConsVitAffMS=(CurrCons.vit/3.6)*0.90
     let CurrSpeedMS=(currentSpeed/3.6)
+    let CurrSpeedAffMS=(currentSpeed/3.6)*1.1
     let dRes = (CurrCons.lim.lim-CurrCons.pmd)-(currentPOS-CurrCons.pmd)
     let calcAccel=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
-    if(CurrCons.vit<1 && currentSpeed>1 && currentSpeed>1.5) {
+    let calcAccelAff=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
+    if(CurrCons.vit<1 && currentSpeed>1 && currentSpeed<1.5) {
         get('train_throttle_input').value=-2
         currentThrottle=-2
         TrainConsignes.shift()
         lastAccel=0
         lastSpeed2 = 0
     }
-    if(calcAccel<0){
-        if(lastAccel!==0) {
-            let deltaspeed = (currentSpeed/3.6)-lastSpeed2;
-            let calcArtificialAccel = deltaspeed*100
-            if(calcArtificialAccel*1.1>lastAccel){
-                let deltaccel = calcArtificialAccel-lastAccel
-                if(deltaccel>calcAccel){
-                    AlarmesPCC[0][10]=2
-                    AlarmesPCC[1][10]=1
-                }
-                calcAccel-=deltaccel
-            }
-            lastSpeed2=(currentSpeed/3.6);
-        }
-    } else {
-        if(lastAccel!==0) {
-            let deltaspeed = (currentSpeed/3.6)-lastSpeed2;
-            let calcArtificialAccel = deltaspeed*100
-            console.log(lastSpeed)
-            if(calcArtificialAccel*1.1<lastAccel){
-                let deltaccel = lastAccel-calcArtificialAccel
-                calcAccel+=deltaccel
-            }
-            lastSpeed2=(currentSpeed/3.6);
-        }
-    }
+    let accelToDist = (((Vpm(ADVpm+0.05)/3.6)**2)-(CurrSpeedMS**2))/(2*((CurrCons.lim.lim-CurrCons.pmd)*(1-(ADVpm+0.05))))
+
     lastAccel=calcAccel
-    let accelToCran=parseFloat(((calcAccel*5)/1.39).toFixed(2))
+    let accelToCran;
+    massRapp=(28/42)*1.39
+    if(get('enable_vaff').checked){
+        accelToCran=parseFloat(((calcAccel*5)/massRapp).toFixed(2))
+    } else {
+        accelToCran=parseFloat(((calcAccel*5)/massRapp).toFixed(2))
+    }
     console.log(`
-        VITESSE ACTUELLE: ${CurrSpeedMS.toFixed(2)}m/s\n
-        VITESSE ATTENDUE: ${(Vpm(ADVpm)/3.6).toFixed(2)}m/s\n
-        DELTA V         : ${CurrSpeedMS-(Vpm(ADVpm)/3.6).toFixed(2)}m/s\n
+        APM             : ${ADVpm}
+        VITESSE ACTUELLE: ${CurrSpeedMS.toFixed(2)}m/s
+        VITESSE ATTENDUE: ${(Vpm(ADVpm)/3.6).toFixed(2)}m/s
+        DELTA V         : ${CurrSpeedMS-(Vpm(ADVpm)/3.6).toFixed(2)}m/s
         ACCEL CALCULEE  : ${calcAccel.toFixed(2)}m/s²
+        ACCEL THEORIQUE : ${accelToDist.toFixed(2)}m/s²
         EQUIVALENT CRAN : ${accelToCran.toFixed(2)} cran
     `)
     if(accelToCran>5){
@@ -449,7 +450,7 @@ let PaIntervalGlobal=setInterval(()=>{
     } else {
         AlarmesPCC[0][11]=0
     }
-    if(accelToCran<-6 && ADVpm<1){
+    if(accelToCran<(-6) && ADVpm<0.99){
         fuStart=true
         get('train_throttle_input').value=0
         currentThrottle=0
@@ -483,8 +484,14 @@ let PaIntervalGlobal=setInterval(()=>{
         currentThrottle=0
         get('train_throttle_input').value=0
         lastAccel=0
+    } else if (ADVpm===1 || ADVpm>1){
+        TrainConsignes.shift()
+        currentThrottle=0
+        get('train_throttle_input').value=0
+        lastAccel=0
+        AlarmesPCC[0][5]=2
+        AlarmesPCC[1][5]=1
     }
-
 },FreqCtrl)
 
 function CONSIGNE_APP(){
@@ -620,6 +627,7 @@ function DCA_LISTENER(){
         AlarmesPCC[0][1]=0
         AlarmesPCC[0][1]=0
         AlarmesPCC[0][11]=0
+        AlarmesPCC[0][10]=0
     } else {
         AlarmesPCC[0][9] = 0
     }
