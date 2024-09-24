@@ -418,13 +418,6 @@ let PaIntervalGlobal=setInterval(()=>{
     let dRes = (CurrCons.lim.lim-CurrCons.pmd)-(currentPOS-CurrCons.pmd)
     let calcAccel=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
     let calcAccelAff=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
-    if(CurrCons.vit<1 && currentSpeed>1 && currentSpeed<1.5) {
-        get('train_throttle_input').value=-2
-        currentThrottle=-2
-        TrainConsignes.shift()
-        lastAccel=0
-        lastSpeed2 = 0
-    }
     let accelToDist = (((Vpm(ADVpm+0.05)/3.6)**2)-(CurrSpeedMS**2))/(2*((CurrCons.lim.lim-CurrCons.pmd)*(1-(ADVpm+0.05))))
 
     lastAccel=calcAccel
@@ -435,7 +428,7 @@ let PaIntervalGlobal=setInterval(()=>{
     } else {
         accelToCran=parseFloat(((calcAccel*5)/massRapp).toFixed(2))
     }
-    console.log(`
+    /*console.log(`
         APM             : ${ADVpm}
         VITESSE ACTUELLE: ${CurrSpeedMS.toFixed(2)}m/s
         VITESSE ATTENDUE: ${(Vpm(ADVpm)/3.6).toFixed(2)}m/s
@@ -443,7 +436,16 @@ let PaIntervalGlobal=setInterval(()=>{
         ACCEL CALCULEE  : ${calcAccel.toFixed(2)}m/s²
         ACCEL THEORIQUE : ${accelToDist.toFixed(2)}m/s²
         EQUIVALENT CRAN : ${accelToCran.toFixed(2)} cran
-    `)
+    `)*/
+    get("pae_calc_cons_vit").innerText=`${CurrCons.vit}km/h`
+    get("pae_calc_type").innerText=`${CurrCons.vit<currentSpeed?"Décélération":"Acceleration"}`
+    get("pae_calc_consDist").innerText=`${(CurrCons.lim.lim-CurrCons.pmd).toFixed(2)}m`
+    get("pae_calc_rest_dist").innerText=`${dRes.toFixed(2)}m`
+    get("pae_calc_apm").innerText=`${ADVpm.toFixed(2)}`
+    get("pae_calc_vit_pm").innerText=`${Vpm(ADVpm).toFixed(2)}km/h`
+    get("pae_calc_deltav").innerText=`${(Vpm(ADVpm)-currentSpeed).toFixed(2)}km/h`
+    get("pae_calc_accelcalc").innerText=`${calcAccel.toFixed(2)}m/s²`
+    get("pae_calc_eqcran").innerText=`${accelToCran.toFixed(2)}c`
     if(accelToCran>5){
         AlarmesPCC[0][11]=2
         AlarmesPCC[1][11]=1
@@ -465,6 +467,18 @@ let PaIntervalGlobal=setInterval(()=>{
         get('train_throttle_input').value=accelToCran
         currentThrottle=accelToCran
     }
+    if(CurrCons.vit<1 && currentSpeed>1 && currentSpeed<1.5) {
+        get('train_throttle_input').value=-1
+        currentThrottle=-1
+    }
+    if(CurrCons.vit<1 && currentSpeed<0.1) {
+        TrainConsignes.shift()
+        lastAccel=0
+        lastSpeed2 = 0
+        get('train_throttle_input').value=-1
+        currentThrottle=-1
+    }
+
 
     if(ADVpm>1 && (currentSpeed>(CurrCons.vit*1.1) && currentSpeed<(CurrCons.vit*0.95))){
         TrainConsignes.shift()
