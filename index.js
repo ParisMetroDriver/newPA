@@ -38,11 +38,11 @@ function init(){
 }
 
 let AlarmesPCC = [
-    [0,0,0,0,0,0, 0,0,0,0,0,0],
-    [0,0,0,0,0,0, 0,0,0,0,0,0],
+    [0,0,0,0,0,0, 0,0,0,0,0,0,0],
+    [0,0,0,0,0,0, 0,0,0,0,0,0,0],
     [
         "pcc_attente_cons","pcc_cons_reject","pcc_control_crb","pcc_waiting_con","pcc_insuf_cons","pcc_apm_hb",
-        "pcc_noret_stop","pcc_cmd_fu","pcc_fustate","pcc_null_vit","pcc_def_motorb","pcc_accel_insuf"
+        "pcc_noret_stop","pcc_cmd_fu","pcc_fustate","pcc_null_vit","pcc_def_motorb","pcc_accel_insuf","pcc_meca_brake"
     ]
 ]
 
@@ -308,14 +308,18 @@ function SPEED_UPDATE(){
 
     
     if(currentThrottle<0){
-        get('train_brake_input').value;
-        totalMotorPower=Math.max(((750*currentAmp)*(Math.min((currentPower*100)/520000, 1)))/globalDiviser,0)
-        let theoricalPower=(750*currentAmp)*(Math.min((520*100)/520000,1))/globalDiviser
+        let theoricalPower=(750*currentAmp)*(Math.min((currentPower*100)/520000,0.1))/globalDiviser
         totalMotorPower=theoricalPower
     } else {
         get('train_brake_input').value=0
-        totalMotorPower=((750*currentAmp)*(Math.min((currentPower*100)/520000, 1)))/globalDiviser
+        totalMotorPower=((750*currentAmp)*(Math.min((currentPower*100)/520000, 0.1)))/globalDiviser
     }
+
+    if(currentAmp>680 && currentThrottle<0){
+        AlarmesPCC[0][12]=1
+        //freinage moteur insuffisant, courant faible...
+        totalMotorPower=((750*720)*0.1)/globalDiviser
+    } else AlarmesPCC[0][12]=0
 
     //totalMotorPower=((750*currentAmp)*(Math.min((currentPower*100)/520000, 1)))/75000
     let accelForce=(totalMotorPower/currentMasse)/0.9
