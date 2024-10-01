@@ -38,11 +38,11 @@ function init(){
 }
 
 let AlarmesPCC = [
-    [0,0,0,0,0,0, 0,0,0,0,0,0,0],
-    [0,0,0,0,0,0, 0,0,0,0,0,0,0],
+    [0,0,0,0,0,0, 0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0, 0,0,0,0,0,0,0,0],
     [
         "pcc_attente_cons","pcc_cons_reject","pcc_control_crb","pcc_waiting_con","pcc_insuf_cons","pcc_apm_hb",
-        "pcc_noret_stop","pcc_cmd_fu","pcc_fustate","pcc_null_vit","pcc_def_motorb","pcc_accel_insuf","pcc_meca_brake"
+        "pcc_noret_stop","pcc_cmd_fu","pcc_fustate","pcc_null_vit","pcc_def_motorb","pcc_accel_insuf","pcc_meca_brake", "pcc_surint"
     ]
 ]
 
@@ -69,6 +69,7 @@ class CONSIGNE {
         }
     }
 }
+let fuCpt = 0
 let PCC_tick=true
 let PCC_Init = ()=>{
     setInterval(()=>{
@@ -115,7 +116,6 @@ function update(){
     SPEED_UPDATE()
     DISTANCE_UPDATE()
     FU_LISTENER()
-    CONSIGNE_APP()
     DCA_LISTENER()
     if(get('enable_sound').checked){
         window.updateSounds()
@@ -248,6 +248,15 @@ function HTML_UPDATE(){
         }
     }
 
+    get('pcc_cptfu').value=fuCpt
+    if(fuCpt>1){
+        get('pcc_cptfu').classList.add("lpccAlarm")
+    } else {
+        get('pcc_cptfu').classList.remove("lpccAlarm")
+    }
+
+    get('pcc_queueCons').value=TrainConsignes.length
+
 
 
     currentThrottle=parseFloat(get('train_throttle_input').value)
@@ -260,20 +269,9 @@ function HTML_UPDATE(){
     currentPatinage=parseFloat(get('train_pat_input').value)
     currentBrakePowToEqPow=currentBrakePow*520/100;
 }
-const BasicPhysicAccel=0.016714285714285716
-function SPEED_UPDATE(){
-    /*let calculatedPower = 0;
-    if(currentThrottle>0){
-        calculatedPower=currentPower
-    } else if(currentThrottle<=0){
-        calculatedPower=Math.max(currentBrakePowToEqPow,currentPower)
-    }
-    let accelForce = ((calculatedPower/1000)/currentMasse)*0.9
-    let frottforce = currentFrottForce/100
-    if(get('enable_physics').checked===false) accelForce=BasicPhysicAccel
-    currentSpeed += ((currentThrottle*accelForce));
-    if((currentThrottle===0 || calculatedPower<=1) && get('enable_physics').checked) currentSpeed=currentSpeed-(frottforce*1.2)*/
-    let supplement=0
+let supplement=0
+setInterval(()=>{
+    supplement=0
     if(currentThrottle>0){
         if(calcArtificialAccel*currentThrottle<currentThrottle*(1.37*(currentThrottle/maxThrottle))){
             supplement+=5
@@ -288,6 +286,21 @@ function SPEED_UPDATE(){
             supplement-=5
         }
     }
+},25)
+const BasicPhysicAccel=0.016714285714285716
+function SPEED_UPDATE(){
+    /*let calculatedPower = 0;
+    if(currentThrottle>0){
+        calculatedPower=currentPower
+    } else if(currentThrottle<=0){
+        calculatedPower=Math.max(currentBrakePowToEqPow,currentPower)
+    }
+    let accelForce = ((calculatedPower/1000)/currentMasse)*0.9
+    let frottforce = currentFrottForce/100
+    if(get('enable_physics').checked===false) accelForce=BasicPhysicAccel
+    currentSpeed += ((currentThrottle*accelForce));
+    if((currentThrottle===0 || calculatedPower<=1) && get('enable_physics').checked) currentSpeed=currentSpeed-(frottforce*1.2)*/
+    
     /*if((calcArtificialAccel*currentThrottle<currentThrottle*1.37 && currentThrottle>0)||(calcArtificialAccel*currentThrottle>currentThrottle*-1.37 && currentThrottle<0)){
         supplement+=5
     } else if ((calcArtificialAccel*currentThrottle<currentThrottle*-1.37 && currentThrottle<0)||(calcArtificialAccel*currentThrottle>currentThrottle*1.37 && currentThrottle>0)){
@@ -357,6 +370,7 @@ setInterval(()=>{
     get('speedAccelOut').innerText=`${calcArtificialAccel.toFixed(2)}`
     get('speedAccelOutG').innerText=`${((deltaspeed*20)/9.81).toFixed(2)}`
 },50)
+
 
 
 function DISTANCE_UPDATE(){
@@ -454,6 +468,9 @@ let FreqCtrl = 100
 let PaIntervalGlobal=setInterval(()=>{
     if(TrainConsignes.length===0) return;
     let CurrCons=TrainConsignes[0]
+    if(fuCpt>1) {
+        return;
+    }
     if(get("enable_depart").checked){
         if(currentSpeed===0 && GoAuth===false){
             return get("btn_train_departure").disabled=false
@@ -512,6 +529,7 @@ let PaIntervalGlobal=setInterval(()=>{
     }
     if(accelToCran<(-6) && ADVpm<0.99){
         fuStart=true
+        fuCpt++;
         get('train_throttle_input').value=0
         currentThrottle=0
         lastAccel=0
@@ -542,6 +560,7 @@ let PaIntervalGlobal=setInterval(()=>{
         TrainConsignes.shift()
         console.log("Dépassement ADV")
         fuStart=true
+        fuCpt++;
         get('train_throttle_input').value=0
         currentThrottle=0
         fuTriggered=true
@@ -566,123 +585,6 @@ let PaIntervalGlobal=setInterval(()=>{
     }
 },FreqCtrl)
 
-function CONSIGNE_APP(){
-    return;
-    if(TrainConsignes.length===0) return;
-    let CurrCons=TrainConsignes[0]
-    if(get("enable_depart").checked){
-        if(currentSpeed===0 && GoAuth===false) return get("btn_train_departure").disabled=false
-    }
-
-    if(currentSpeed<2){
-        get('train_throttle_input').value=2
-        currentThrottle=2
-    }
-    GoAuth=false
-    get("btn_train_departure").disabled=true
-    let ADVpm=(currentPOS-CurrCons.pmd)/(CurrCons.lim.lim-CurrCons.pmd)
-    //console.log(ADVpm)
-    let FreqCtrl = 500
-    let IntervalArray = []
-    for(let i=0;i<1;i+=FreqCtrl){
-        IntervalArray.push(parseFloat(i.toFixed(2)))
-    }
-    //console.log(IntervalArray)
-    //console.log(IntervalArray)
-    if(true){
-        let dV=currentSpeed-CurrCons.vit
-        let Vpm = (adv)=>(dV*(1-adv))+CurrCons.vit;
-        let CurrConsVitMS=CurrCons.vit/3.6
-
-        if(PaInterval===false){
-            PaInterval=setInterval(()=>{
-                let CurrSpeedMS=(currentSpeed/3.6)
-                let dRes = (CurrCons.lim.lim-CurrCons.pmd)-(currentPOS-CurrCons.pmd)
-                let calcAccel=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
-                if(calcAccel<0){
-                    if(lastAccel===0) return;
-                    let deltaspeed = (currentSpeed/3.6)-lastSpeed;
-                    let calcArtificialAccel = deltaspeed*10
-                    if(calcArtificialAccel*1.1>lastAccel){
-                        let deltaccel = calcArtificialAccel-lastAccel
-                        calcAccel-=deltaccel
-                    }
-                } else {
-                    if(lastAccel===0) return;
-                    let deltaspeed = (currentSpeed/3.6)-lastSpeed;
-                    let calcArtificialAccel = deltaspeed*10
-                    if(calcArtificialAccel*1.1<lastAccel){
-                        let deltaccel = lastAccel-calcArtificialAccel
-                        calcAccel+=deltaccel
-                    }
-                }
-                lastAccel=calcAccel
-                let accelToCran=parseFloat(((calcAccel*5)/1.39).toFixed(2))
-                console.log(`
-                    VITESSE ACTUELLE: ${CurrSpeedMS.toFixed(2)}m/s\n
-                    VITESSE ATTENDUE: ${(Vpm(ADVpm)/3.6).toFixed(2)}m/s\n
-                    DELTA V         : ${CurrSpeedMS-(Vpm(ADVpm)/3.6).toFixed(2)}m/s\n
-                    ACCEL CALCULEE  : ${calcAccel.toFixed(2)}m/s²
-                    EQUIVALENT CRAN : ${accelToCran.toFixed(2)} cran
-                `)
-                if(accelToCran>5){
-                    AlarmesPCC[0][11]=2
-                    AlarmesPCC[1][11]=1
-                } else {
-                    AlarmesPCC[0][11]=0
-                }
-                if(accelToCran<-6 && ADVpm<1){
-                    fuStart=true
-                    get('train_throttle_input').value=0
-                    currentThrottle=0
-                    lastAccel=0
-                    fuTriggered=true
-                    AlarmesPCC[0][7]=2
-                    AlarmesPCC[1][7]=1
-                    AlarmesPCC[0][2]=2
-                    AlarmesPCC[1][2]=1
-                    console.log(ADVpm)
-                    PaInterval=false
-                } else {
-                    get('train_throttle_input').value=accelToCran
-                    currentThrottle=accelToCran
-                }
-            },FreqCtrl)
-        }
-
-    } else if (ADVpm<1){
-        TrainConsignes.shift()
-        console.log("Consigne rejetée")
-        AlarmesPCC[0][1]=2
-        AlarmesPCC[1][1]=1
-        clearInterval(PaInterval)
-        lastAccel=0
-        PaInterval=false
-    }
-    if(ADVpm>1 && (currentSpeed>(CurrCons.vit*1.1) && currentSpeed<(CurrCons.vit*0.95))){
-        TrainConsignes.shift()
-        console.log("Dépassement ADV")
-        fuStart=true
-        get('train_throttle_input').value=0
-        currentThrottle=0
-        fuTriggered=true
-        lastAccel=0
-        clearInterval(PaInterval)
-        PaInterval=false
-
-        AlarmesPCC[0][7]=2
-        AlarmesPCC[1][7]=1
-        AlarmesPCC[0][5]=2
-        AlarmesPCC[1][5]=1
-    } else if (ADVpm>1 && (currentSpeed<(CurrCons.vit*1.1) && currentSpeed>(CurrCons.vit*0.95))){
-        TrainConsignes.shift()
-        currentThrottle=0
-        get('train_throttle_input').value=0
-        clearInterval(PaInterval)
-        PaInterval=false
-        lastAccel=0
-    }
-}
 
 function DCA_LISTENER(){
     if(fuStart || currentSpeed===0){
@@ -714,6 +616,13 @@ function DCA_LISTENER(){
     } else {
         AlarmesPCC[0][0]=0
     }
+
+    if(currentAmp>690){
+        AlarmesPCC[0][13] = 2
+        AlarmesPCC[1][13] = 1
+    } else {
+        AlarmesPCC[0][13] = 0
+    }
 }
 
 get('btn_quick_setup').addEventListener('click',()=>{
@@ -736,6 +645,7 @@ get('btn_quick_sysstop').addEventListener('click',()=>{
 get('btn_embrake').addEventListener('click',()=>{
     fuTriggered=true
     fuStart=true
+    fuCpt++;
     fuBtn=true
     get('btn_embrake').disabled=true
     get('btn_embrake_reset').disabled=false
@@ -765,3 +675,10 @@ get('pcc_acq').addEventListener('click',()=>{
     }
 })
 
+get('pcc_btn_acqfu').addEventListener('click',()=>{
+    if(fuCpt>1) return fuCpt--;
+})
+
+get('pcc_inter_ordre').addEventListener('click',()=>{
+    TrainConsignes.shift()
+})

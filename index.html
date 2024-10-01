@@ -33,17 +33,18 @@
                 <tr>
                     <th>...</th>
                     <td><input type="text" class="lpcc" id="pcc_meca_brake" value="Frein mécanique actif" disabled></td>
+                    <td><input type="text" class="lpcc" id="pcc_surint" value="Anti-surintensité" disabled></td>
                 </tr>
                 <tr>
                     <th>Compteurs</th>
-                    <td>Compteur FU<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled></td>
-                    <td>Consigne queue<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled></td>
+                    <td>Compteur FU<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled id="pcc_cptfu"></td>
+                    <td>Consigne queue<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled id="pcc_queueCons"></td>
                     <td>Contrôles<input type="text" class="lpccsmall" style="width: 30px;" value="0" disabled></td>
                 </tr>
                 <tr>
                     <th>Commandes</th>
-                    <td><button style="width: 90%;">Acq Cpt FU</button></td>
-                    <td><button style="width: 90%;">Interompre ordre</button></td>
+                    <td><button style="width: 90%;" id="pcc_btn_acqfu">Acq Cpt FU</button></td>
+                    <td><button style="width: 90%;" id="pcc_inter_ordre">Interompre ordre</button></td>
                     <td><button style="width: 90%;">Exporter consigne</button></td>
                 </tr>
             </table>
