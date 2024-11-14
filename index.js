@@ -311,6 +311,10 @@ function SPEED_UPDATE(){
         deltaAccel=-(ArtificialAccelMoy-TheoricalAccel)
     }
     supplement=((deltaAccel/50)*750)*((currentPower/maxPower)**2)
+    if(currentSpeed>=80) {
+        supplement=0
+        currentAmp=0
+    }
 
     get('traction_tab_debug_accelmoy').innerText=ArtificialAccelMoy.toFixed(2)
     get('traction_tab_debug_acceltheo').innerText=TheoricalAccel.toFixed(2)
