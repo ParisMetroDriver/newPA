@@ -87,6 +87,29 @@
             </div>
         </fieldset>
     </div>
+    <div id="bodiv4">
+        <fieldset style="width: 15%;">
+            <legend>Traction</legend>
+            <table style="width: 100%;">
+                <tr>
+                    <th scope="row">ACCEL MOY</th>
+                    <td id="traction_tab_debug_accelmoy">0.00</td>
+                </tr>
+                <tr>
+                    <th scope="row">ACCEL THEO</th>
+                    <td id="traction_tab_debug_acceltheo">0.00</td>
+                </tr>
+                <tr>
+                    <th scope="row">DELTA</th>
+                    <td id="traction_tab_debug_deltaaccel">0.00</td>
+                </tr>
+                <tr>
+                    <th scope="row">SUPP A</th>
+                    <td id="traction_tab_debug_supp">0.00</td>
+                </tr>
+            </table>
+        </fieldset>
+    </div>
     <div id="bodiv2">
         <fieldset style="width: 50%; display: flex; flex-direction: row; align-items:center; justify-content: center; height: 100%;">
             <legend>Données</legend>
@@ -138,18 +161,18 @@
                     <tr>
                         <td>Acceleration</td>
                         <td><span><input type="range" min="1" max="80" value="1" style="width: 90%;" id="accel_cmd_vit_input"><span id="accel_cmd_vit_input_state">0</span></span></td>
-                        <td><span><button style="width: 100%;">Envoi</button></span></td>
+                        <td><span><button style="width: 100%;" disabled>Envoi</button></span></td>
                     </tr>
                     <tr>
                         <td>Ralentissement</td>
                         <td><span><input type="range" min="1" max="80" value="1" style="width: 90%;" id="decel_cmd_vit_input"><span id="decel_cmd_vit_input_state">0</span></span></td>
-                        <td><span><button style="width: 100%;">Envoi</button></span></td>
+                        <td><span><button style="width: 100%;" disabled>Envoi</button></span></td>
                         <td style="text-align: center;"><span>Ajust?<input type="checkbox"></span></td>
                     </tr>
                     <tr>
                         <td>Arrêt</td>
                         <td style="text-align: center;">0</td>
-                        <td><span><button style="width: 100%;">Envoi</button></span></td>
+                        <td><span><button style="width: 100%;" disabled>Envoi</button></span></td>
                         <td style="text-align: center;"><span>Ajust?<input type="checkbox"></span></td>
                     </tr>
                     <caption>Presets max</caption>

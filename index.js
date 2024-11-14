@@ -11,9 +11,13 @@ let max_tps = 50.0;
 
 let fuStart=false
 let calcArtificialAccel=0;
+let ArtificialAccelMoy=0;
+let accelsCalcArray=[]
+const accelLentghThreshold=2
 
 const maxThrottle = 5
 const maxSpeed = 80;
+const maxPower = 520
 
 let currentSpeed = 0;
 let currentDistance = 0;
@@ -118,7 +122,9 @@ function update(){
     FU_LISTENER()
     DCA_LISTENER()
     if(get('enable_sound').checked){
-        window.updateSounds()
+        if(typeof window.updateSounds==="function"){
+            window.updateSounds()
+        }
     } else {
         if(typeof SOUND_MANAGER === 'object'){
             SOUND_MANAGER.stopAllSound()
@@ -262,7 +268,7 @@ function HTML_UPDATE(){
     currentThrottle=parseFloat(get('train_throttle_input').value)
     currentSlope=parseInt(get('train_slope_input').value)
     currentPower=parseInt(get('train_power_input').value)
-    currentAmp=parseInt(get('train_intens_input').value)
+    //currentAmp=parseInt(get('train_intens_input').value)
     currentMasse=parseInt(get('train_mass_input').value)
     currentFrottForce=parseFloat(get('train_frott_input').value)
     currentBrakePow=parseFloat(get('train_brake_input').value)
@@ -270,7 +276,7 @@ function HTML_UPDATE(){
     currentBrakePowToEqPow=currentBrakePow*520/100;
 }
 let supplement=0
-setInterval(()=>{
+/*setInterval(()=>{
     supplement=0
     if(currentThrottle>0){
         if(calcArtificialAccel*currentThrottle<currentThrottle*(1.37*(currentThrottle/maxThrottle))){
@@ -286,9 +292,35 @@ setInterval(()=>{
             supplement-=5
         }
     }
-},25)
+},25)*/
 const BasicPhysicAccel=0.016714285714285716
 function SPEED_UPDATE(){
+    //? On adapte le cran à la puissance moteur
+    let throttlePercent = currentThrottle/maxThrottle
+    currentPower=Math.abs(throttlePercent*maxPower)
+    get('train_power_input').value=currentPower
+
+    supplement=0
+    let deltaAccel=0
+    let TheoricalAccel=0
+    if(currentThrottle>0){
+        TheoricalAccel=(1.37*(currentPower/maxPower)**2)
+        deltaAccel=ArtificialAccelMoy-TheoricalAccel
+    } else if (currentThrottle<0){
+        TheoricalAccel=((-1.37)*(currentPower/maxPower)**2)
+        deltaAccel=-(ArtificialAccelMoy-TheoricalAccel)
+    }
+    supplement=((deltaAccel/50)*750)*((currentPower/maxPower)**2)
+
+    get('traction_tab_debug_accelmoy').innerText=ArtificialAccelMoy.toFixed(2)
+    get('traction_tab_debug_acceltheo').innerText=TheoricalAccel.toFixed(2)
+    get('traction_tab_debug_deltaaccel').innerText=deltaAccel.toFixed(2)
+    get('traction_tab_debug_supp').innerText=supplement.toFixed(2)
+    /*console.log("----")
+    console.log(`RACCEL ${ArtificialAccelMoy.toFixed(2)}`)
+    console.log(`THEORQ ${(1.37*(currentPower/maxPower)).toFixed(2)}`)
+    console.log(`DELTA  ${deltaAccel.toFixed(2)}`)
+    console.log(`SUPP   ${supplement.toFixed(2)}A`)*/
     /*let calculatedPower = 0;
     if(currentThrottle>0){
         calculatedPower=currentPower
@@ -306,18 +338,18 @@ function SPEED_UPDATE(){
     } else if ((calcArtificialAccel*currentThrottle<currentThrottle*-1.37 && currentThrottle<0)||(calcArtificialAccel*currentThrottle>currentThrottle*1.37 && currentThrottle>0)){
         supplement-=5
     }*/
-    currentAmp+=supplement
+    currentAmp-=supplement
     get('train_intens_input').value=currentAmp
     if(currentSpeed===0 && currentThrottle<=0){
         currentAmp=0
         get('train_intens_input').value=0
     } else if (currentSpeed===0 && currentThrottle>0){
-        currentAmp=620
-        get('train_intens_input').value=620
+        currentAmp=300
+        get('train_intens_input').value=300
     }
 
     let totalMotorPower;
-    let globalDiviser=75000
+    let globalDiviser=44000
 
     
     if(currentThrottle<0){
@@ -335,9 +367,9 @@ function SPEED_UPDATE(){
     } else AlarmesPCC[0][12]=0
 
     //totalMotorPower=((750*currentAmp)*(Math.min((currentPower*100)/520000, 1)))/75000
-    let accelForce=(totalMotorPower/currentMasse)/0.9
+    let accelForce=(totalMotorPower/currentMasse)/0.8
     let frottforce = currentFrottForce/100
-    currentSpeed += ((currentThrottle*accelForce));
+    currentSpeed += (((currentThrottle)*accelForce));
     if((currentThrottle===0 || totalMotorPower<=1) && get('enable_physics').checked) currentSpeed=currentSpeed-(frottforce*1.2)
 
     if(currentSpeed > maxSpeed) currentSpeed = maxSpeed;
@@ -367,6 +399,15 @@ setInterval(()=>{
     let deltaspeed = (currentSpeed/3.6)-lastSpeed;
     lastSpeed=(currentSpeed/3.6);
     calcArtificialAccel=(deltaspeed*20)
+    if(accelsCalcArray.length<accelLentghThreshold){
+        accelsCalcArray.push(calcArtificialAccel)
+    } 
+    if (accelsCalcArray.length===accelLentghThreshold){
+        let arraySum = 0;
+        for(let val of accelsCalcArray) arraySum+=val;
+        ArtificialAccelMoy=(arraySum/(accelLentghThreshold))
+        accelsCalcArray.shift()
+    }
     get('speedAccelOut').innerText=`${calcArtificialAccel.toFixed(2)}`
     get('speedAccelOutG').innerText=`${((deltaspeed*20)/9.81).toFixed(2)}`
 },50)
