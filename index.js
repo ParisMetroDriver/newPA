@@ -410,7 +410,7 @@ function SPEED_UPDATE(){
         AlarmesPCC[0][12]=1
         //freinage moteur insuffisant, courant faible...
         totalMotorPower=((750*pseudoAmp)*0.1)/globalDiviser
-        get('train_brake_input').value=100*pseudoAmp/700
+        get('train_brake_input').value=100*((pseudoAmp/700)*(Math.abs(currentThrottle)/maxThrottle))
     } else{
         get('train_brake_input').value=0
         AlarmesPCC[0][12]=0
