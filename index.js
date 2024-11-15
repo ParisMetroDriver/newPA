@@ -317,7 +317,7 @@ function SPEED_UPDATE(){
         deltaAccel=-(ArtificialAccelMoy-TheoricalAccel)
     }
     supplement=((deltaAccel/50)*750)*((currentPower/maxPower)**2)
-    if(currentSpeed>=80) {
+    if(currentSpeed>=80 && currentThrottle>0) {
         supplement=0
         currentAmp=0
     }
