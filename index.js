@@ -29,11 +29,15 @@ let currentThrottle=parseInt(get('train_throttle_input').value)
 let currentSlope=parseInt(get('train_slope_input').value)
 let currentPower=parseInt(get('train_power_input').value)
 let currentAmp=parseInt(get('train_intens_input').value)
+let currentVolt=parseInt(get('train_voltage_input').value)
 let currentMasse=parseInt(get('train_mass_input').value)
 let currentFrottForce=parseInt(get('train_frott_input').value)
 let currentBrakePow=parseFloat(get('train_brake_input').value)
 let currentPatinage=parseFloat(get('train_pat_input').value)
 let currentBrakePowToEqPow=currentBrakePow*520/100;
+
+let djhtTemporisation=0
+let djhtCut = false
 
 init()
 function init(){
@@ -42,11 +46,11 @@ function init(){
 }
 
 let AlarmesPCC = [
-    [0,0,0,0,0,0, 0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0, 0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0],
     [
         "pcc_attente_cons","pcc_cons_reject","pcc_control_crb","pcc_waiting_con","pcc_insuf_cons","pcc_apm_hb",
-        "pcc_noret_stop","pcc_cmd_fu","pcc_fustate","pcc_null_vit","pcc_def_motorb","pcc_accel_insuf","pcc_meca_brake", "pcc_surint"
+        "pcc_noret_stop","pcc_cmd_fu","pcc_fustate","pcc_null_vit","pcc_def_motorb","pcc_accel_insuf","pcc_meca_brake", "pcc_surint","pcc_djht"
     ]
 ]
 
@@ -161,6 +165,7 @@ function HTML_UPDATE(){
     get('train_slope_state').innerText=`${get('train_slope_input').value}`
     get('train_power_state').innerText=`${get('train_power_input').value}`
     get('train_intens_state').innerText=`${get('train_intens_input').value}`
+    get('train_voltage_state').innerText=`${get('train_voltage_input').value}`
     get('train_brake_state').innerText=`${get('train_brake_input').value}`
     get('train_mass_state').innerText=`${get('train_mass_input').value}`
     get('train_frott_state').innerText=`${get('train_frott_input').value}`
@@ -269,6 +274,7 @@ function HTML_UPDATE(){
     currentSlope=parseInt(get('train_slope_input').value)
     currentPower=parseInt(get('train_power_input').value)
     //currentAmp=parseInt(get('train_intens_input').value)
+    currentVolt=parseInt(get('train_voltage_input').value)
     currentMasse=parseInt(get('train_mass_input').value)
     currentFrottForce=parseFloat(get('train_frott_input').value)
     currentBrakePow=parseFloat(get('train_brake_input').value)
@@ -351,17 +357,47 @@ function SPEED_UPDATE(){
         currentAmp=300
         get('train_intens_input').value=300
     }
+    if(currentAmp>700){
+        currentAmp=700
+    }
 
     let totalMotorPower;
     let globalDiviser=44000
 
+    let today = Date.now()
+
+    let actualVoltage=currentVolt
+
+    if(currentVolt>1000 || currentVolt<100){
+        if(actualVoltage>=0 && djhtCut===false){
+            djhtTemporisation=Date.now()
+            djhtCut=true
+        }
+        if(today-djhtTemporisation<5000 && djhtCut===true){
+            actualVoltage=0
+            currentAmp=0
+        }
+        if(today-djhtTemporisation>5000 && djhtCut===true){
+            djhtCut=false
+            djhtTemporisation=Date.now()
+            actualVoltage=0
+            currentAmp=0
+        }
+    } else if (today-djhtTemporisation>5000 && currentVolt<1000 && currentVolt>100 && djhtCut===true) {
+        djhtCut=false
+        SOUND_MANAGER.playSound('djht206', 2)
+    }
+    if(today-djhtTemporisation<5000 && djhtCut===true){
+        actualVoltage=0
+        currentAmp=0
+    }
     
     if(currentThrottle<0){
-        let theoricalPower=(750*currentAmp)*(Math.min((currentPower*100)/520000,0.1))/globalDiviser
+        let theoricalPower=(actualVoltage*currentAmp)*(Math.min((currentPower*100)/520000,0.1))/globalDiviser
         totalMotorPower=theoricalPower
     } else {
         get('train_brake_input').value=0
-        totalMotorPower=((750*currentAmp)*(Math.min((currentPower*100)/520000, 0.1)))/globalDiviser
+        totalMotorPower=((actualVoltage*currentAmp)*(Math.min((currentPower*100)/520000, 0.1)))/globalDiviser
     }
 
     if(currentAmp>680 && currentThrottle<0){
@@ -668,6 +704,15 @@ function DCA_LISTENER(){
     } else {
         AlarmesPCC[0][13] = 0
     }
+
+    if(djhtCut===true && AlarmesPCC[0][14] === 0){
+        AlarmesPCC[0][14] = 2
+        AlarmesPCC[1][14] = 1
+        SOUND_MANAGER.playSound('djht206', 2)
+    } else if (djhtCut===false && currentVolt>100 && currentVolt<1000){
+        AlarmesPCC[0][14] = 0
+    }
+
 }
 
 get('btn_quick_setup').addEventListener('click',()=>{
