@@ -309,7 +309,7 @@ function SPEED_UPDATE(){
     supplement=0
     let deltaAccel=0
     let TheoricalAccel=0
-    if(currentThrottle>0){
+    if(currentThrottle>0 && djhtCut===false){
         TheoricalAccel=(1.37*(currentPower/maxPower)**2)
         deltaAccel=ArtificialAccelMoy-TheoricalAccel
     } else if (currentThrottle<0){
@@ -349,6 +349,8 @@ function SPEED_UPDATE(){
         supplement-=5
     }*/
     currentAmp-=supplement
+    let pseudoAmp = currentAmp
+
     get('train_intens_input').value=currentAmp
     if(currentSpeed===0 && currentThrottle<=0){
         currentAmp=0
@@ -360,6 +362,7 @@ function SPEED_UPDATE(){
     if(currentAmp>700){
         currentAmp=700
     }
+
 
     let totalMotorPower;
     let globalDiviser=44000
@@ -375,13 +378,15 @@ function SPEED_UPDATE(){
         }
         if(today-djhtTemporisation<5000 && djhtCut===true){
             actualVoltage=0
-            currentAmp=0
+            //currentAmp=0
+            get('train_intens_input').value=0
         }
         if(today-djhtTemporisation>5000 && djhtCut===true){
             djhtCut=false
             djhtTemporisation=Date.now()
             actualVoltage=0
-            currentAmp=0
+            //currentAmp=0
+            get('train_intens_input').value=0
         }
     } else if (today-djhtTemporisation>5000 && currentVolt<1000 && currentVolt>100 && djhtCut===true) {
         djhtCut=false
@@ -389,22 +394,27 @@ function SPEED_UPDATE(){
     }
     if(today-djhtTemporisation<5000 && djhtCut===true){
         actualVoltage=0
-        currentAmp=0
+        //currentAmp=0
+        get('train_intens_input').value=0
     }
     
     if(currentThrottle<0){
         let theoricalPower=(actualVoltage*currentAmp)*(Math.min((currentPower*100)/520000,0.1))/globalDiviser
         totalMotorPower=theoricalPower
     } else {
-        get('train_brake_input').value=0
+        //get('train_brake_input').value=0
         totalMotorPower=((actualVoltage*currentAmp)*(Math.min((currentPower*100)/520000, 0.1)))/globalDiviser
     }
 
-    if(currentAmp>680 && currentThrottle<0){
+    if((currentAmp>680 || djhtCut===true) && currentThrottle<0){
         AlarmesPCC[0][12]=1
         //freinage moteur insuffisant, courant faible...
-        totalMotorPower=((750*720)*0.1)/globalDiviser
-    } else AlarmesPCC[0][12]=0
+        totalMotorPower=((750*pseudoAmp)*0.1)/globalDiviser
+        get('train_brake_input').value=100*pseudoAmp/700
+    } else{
+        get('train_brake_input').value=0
+        AlarmesPCC[0][12]=0
+    }
 
     //totalMotorPower=((750*currentAmp)*(Math.min((currentPower*100)/520000, 1)))/75000
     let accelForce=(totalMotorPower/currentMasse)/0.8
@@ -698,7 +708,7 @@ function DCA_LISTENER(){
         AlarmesPCC[0][0]=0
     }
 
-    if(currentAmp>690){
+    if(currentAmp>690 && djhtCut===false){
         AlarmesPCC[0][13] = 2
         AlarmesPCC[1][13] = 1
     } else {
