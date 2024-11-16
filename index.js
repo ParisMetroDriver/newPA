@@ -371,7 +371,7 @@ function SPEED_UPDATE(){
 
     let actualVoltage=currentVolt
 
-    if(currentVolt>1000 || currentVolt<100){
+    if(currentVolt>1050 || currentVolt<450){
         if(actualVoltage>=0 && djhtCut===false){
             djhtTemporisation=Date.now()
             djhtCut=true
@@ -388,7 +388,7 @@ function SPEED_UPDATE(){
             //currentAmp=0
             get('train_intens_input').value=0
         }
-    } else if (today-djhtTemporisation>5000 && currentVolt<1000 && currentVolt>100 && djhtCut===true) {
+    } else if (today-djhtTemporisation>5000 && currentVolt<1050 && currentVolt>450 && djhtCut===true) {
         djhtCut=false
         SOUND_MANAGER.playSound('djht206', 2)
     }
@@ -406,10 +406,11 @@ function SPEED_UPDATE(){
         totalMotorPower=((actualVoltage*currentAmp)*(Math.min((currentPower*100)/520000, 0.1)))/globalDiviser
     }
 
-    if((currentAmp>680 || djhtCut===true) && currentThrottle<0){
+    if((currentAmp>680 || djhtCut===true || currentVolt>1000) && currentThrottle<0){
         AlarmesPCC[0][12]=1
         //freinage moteur insuffisant, courant faible...
         totalMotorPower=((750*pseudoAmp)*0.1)/globalDiviser
+        get('train_intens_input').value=0
         get('train_brake_input').value=100*((pseudoAmp/700)*(Math.abs(currentThrottle)/maxThrottle))
     } else{
         get('train_brake_input').value=0
@@ -420,7 +421,7 @@ function SPEED_UPDATE(){
     let accelForce=(totalMotorPower/currentMasse)/0.8
     let frottforce = currentFrottForce/100
     currentSpeed += (((currentThrottle)*accelForce));
-    if((currentThrottle===0 || totalMotorPower<=1) && get('enable_physics').checked) currentSpeed=currentSpeed-(frottforce*1.2)
+    if((currentThrottle===0 || djhtCut===true) && get('enable_physics').checked) currentSpeed=currentSpeed-(frottforce*1.2)
 
     if(currentSpeed > maxSpeed) currentSpeed = maxSpeed;
     if(currentSpeed < 0) currentSpeed = 0;
@@ -719,7 +720,7 @@ function DCA_LISTENER(){
         AlarmesPCC[0][14] = 2
         AlarmesPCC[1][14] = 1
         SOUND_MANAGER.playSound('djht206', 2)
-    } else if (djhtCut===false && currentVolt>100 && currentVolt<1000){
+    } else if (djhtCut===false && currentVolt>450 && currentVolt<1050){
         AlarmesPCC[0][14] = 0
     }
 
