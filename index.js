@@ -62,7 +62,7 @@ class CONSIGNE {
         let CurrSpeedMS=(currentSpeed/3.6)
         let CurrConsVitMS=(cons/3.6)
         let dRes = (paf-pmd)-(currentPOS-pmd)
-        let calcAccel=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
+        let calcAccel=(CurrConsVitMS-CurrSpeedMS)/(dRes)
         if(calcAccel<-1.4 || calcAccel>1.4){
             AlarmesPCC[0][1]=2
             AlarmesPCC[1][1]=1
@@ -577,13 +577,17 @@ let PaIntervalGlobal=setInterval(()=>{
 
     let ADVpm=(currentPOS-CurrCons.pmd)/(CurrCons.lim.lim-CurrCons.pmd)
     let dV=currentSpeed-CurrCons.vit
-    let Vpm = (adv)=>(dV*(1-adv))+CurrCons.vit;
+    /*let Vpm = (adv)=>(dV*(1-adv))+CurrCons.vit;*/
+    let Vpm = (adv)=>{
+        if(CurrCons.vit<currentSpeed) return (-CurrCons.vit)*(adv**2)+CurrCons.vit;
+        else return ((-CurrCons.vit)*(adv**2)+(2*CurrCons.vit*adv))
+    };
     let CurrConsVitMS=CurrCons.vit/3.6
     let CurrConsVitAffMS=(CurrCons.vit/3.6)*0.90
     let CurrSpeedMS=(currentSpeed/3.6)
     let CurrSpeedAffMS=(currentSpeed/3.6)*1.1
     let dRes = (CurrCons.lim.lim-CurrCons.pmd)-(currentPOS-CurrCons.pmd)
-    let calcAccel=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
+    let calcAccel=(Vpm(ADVpm+0.05)-CurrSpeedMS)/(FreqCtrl/1000)
     let calcAccelAff=((CurrConsVitMS**2)-(CurrSpeedMS**2))/(2*dRes)
     let accelToDist = (((Vpm(ADVpm+0.05)/3.6)**2)-(CurrSpeedMS**2))/(2*((CurrCons.lim.lim-CurrCons.pmd)*(1-(ADVpm+0.05))))
 
