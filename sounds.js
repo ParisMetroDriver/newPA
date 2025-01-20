@@ -254,10 +254,61 @@ let fuTriggered = false
 let fuAcq = false
 let finFu = false
 
+// Élément audio
+const accelerationSound = document.getElementById('audio');
 
+// Paramètres de simulation
+let isPlaying = false;
+
+let accelSrc = "ACCEL"
+
+// Fonction pour synchroniser le son avec la vitesse
+function updateSoundPosition(speed) {
+    if(currentThrottle>0 && accelSrc!=="ACCEL") {
+        accelerationSound.src="src/snd/val206/test_mot.mp3";
+        accelSrc="ACCEL"
+    }
+    if(currentThrottle<0 && accelSrc!=="DECEL") {
+        accelerationSound.src="src/snd/val206/test_mot_rev.mp3";
+        accelSrc="DECEL"
+    }
+    if(currentSpeed===0) return accelerationSound.pause();
+    accelerationSound.play()
+  const soundDuration = accelerationSound.duration; // Durée totale du son
+  if (!soundDuration) return; // Assurez-vous que le son est chargé
+
+  // Calcul de la position dans l'audio en fonction de la vitesse
+  const normalizedSpeed = Math.min(speed / maxSpeed, 0.99); // Normaliser entre 0 et 1
+  const targetTime = normalizedSpeed * soundDuration; // Position cible dans le son
+  const targetTimeRev = (1-normalizedSpeed) * soundDuration; // Position cible dans le son
+
+  // Ajuster la position du son
+  if (Math.abs(accelerationSound.currentTime - targetTime) > 0.1) {
+    accelerationSound.currentTime = currentThrottle>0?targetTime:targetTimeRev;
+  }
+  
+
+  const targetPlayback = Math.abs(currentThrottle/maxThrottle);
+
+  accelerationSound.playbackRate=targetPlayback+0.10
+}
+
+// Lecture du son
+accelerationSound.addEventListener('canplay', () => {
+  if (!isPlaying) {
+    accelerationSound.loop = true; // Assurer une lecture continue
+    accelerationSound.play();
+    isPlaying = true;
+  }
+});
+
+setInterval(()=>{
+    updateSoundPosition(currentSpeed);
+},500)
 
 window.updateSounds=()=>{
-    let throttlePourcent = (currentThrottle*100)/maxThrottle
+    
+
 
     let vitessePourcent = (currentSpeed*100)/maxSpeed
     let aigFreqThreshold = 24 //valeur de viteesse où la fréquence aigue commence à disparaitre
@@ -287,8 +338,10 @@ window.updateSounds=()=>{
         }
     
         if((currentSpeed>0 && !(currentThrottle===0))){
-            SOUND_MANAGER.loopSound('hach206',Math.abs(throttlePourcent)/70)
-            SOUND_MANAGER.loopSound('hach206all',Math.abs(throttlePourcent)/180+0.15)
+            //! NEW MOT
+            /*SOUND_MANAGER.loopSound('hach206',Math.abs(throttlePourcent)/70)
+            SOUND_MANAGER.loopSound('hach206all',Math.abs(throttlePourcent)/180+0.15)*/
+            //! END NEW MOT
             //console.log(`${Math.abs(throttlePourcent)/180+0.15}`)
             //SOUND_MANAGER.loopSound('hach206ng',0.3)
             //SOUND_MANAGER.loopSound('hach206bis',0.1)
@@ -300,10 +353,15 @@ window.updateSounds=()=>{
 
         if(currentSpeed>0){
             //SOUND_MANAGER.loopSound('mot206',0.5,currentSpeed/20)
-            SOUND_MANAGER.loopSound('mot2061F',Math.min(20/currentSpeed,0.5),currentSpeed/20)
+            //! NEW MOT <
+            /*SOUND_MANAGER.loopSound('mot2061F',Math.min(20/currentSpeed,0.5),currentSpeed/20)*/
+            //! > NEW MOT
             //console.log(`${Math.min(20/currentSpeed,0.5)}`)
-            SOUND_MANAGER.loopSound('mot2062F',aigFreqVol,currentSpeed/20)
-            SOUND_MANAGER.loopSound('mot2063F',bFreqVol,currentSpeed/20)
+            //! NEW MOT <
+            /*SOUND_MANAGER.loopSound('mot2062F',aigFreqVol,currentSpeed/20)
+            SOUND_MANAGER.loopSound('mot2063F',bFreqVol,currentSpeed/20)*/
+            //! > NEW MOT
+
         }
     } else {
         if(currentSpeed===0) fuTriggered=false;
@@ -322,9 +380,10 @@ window.updateSounds=()=>{
         SOUND_MANAGER.stopSound('hach206ng')
         SOUND_MANAGER.stopSound('hach206all')
 
-        
-        SOUND_MANAGER.loopSound('mot2061F',0.5,currentSpeed/20)
-        SOUND_MANAGER.loopSound('mot2062F',0.2,currentSpeed/20)
+        //! NEW MOT <
+        /*SOUND_MANAGER.loopSound('mot2061F',0.5,currentSpeed/20)
+        SOUND_MANAGER.loopSound('mot2062F',0.2,currentSpeed/20)*/
+        //! > NEW MOT
 
         if(currentSpeed<12 && finFu===false){
             finFu=true
@@ -350,7 +409,9 @@ window.updateSounds=()=>{
     }
 
     if(currentSpeed>0){
-        SOUND_MANAGER.loopSound('ambBase206',currentSpeed/60,Math.max((currentSpeed/60)-0.3,0.1))
+        //! NEW MOT <
+        //SOUND_MANAGER.loopSound('ambBase206',currentSpeed/60,Math.max((currentSpeed/60)-0.3,0.1))
+        //! > NEW MOT
         //console.log(`${Math.max((currentSpeed/60)-0.3,0.1)}`)
     }
 }

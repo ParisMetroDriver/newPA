@@ -148,7 +148,7 @@ function FU_LISTENER(){
         get('btn_embrake_reset').disabled=false
         if(currentSpeed>0){
             get('train_throttle_input').value=0
-            currentSpeed += (((-6)*((0.52/currentMasse)*1.4)));
+            currentSpeed += (((-7)*((0.52/currentMasse)*1.4)));
         } else {
             if(currentSpeed<0){
                 currentSpeed=0
